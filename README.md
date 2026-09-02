@@ -2,8 +2,7 @@
 
 **Team:** Team Pikachu
 **Team Members:** Ujwal U, Srilakshmi
-**Contact:** ujwaljawalgi2208@gmail.com, 
-dsrilakshmi@gmail.com
+**Contact:** ujwaljawalgi2208@gmail.com, dsrilakshmi@gmail.com
 
 Built for **HH Goa 2026 Shortlisting Task 3: Face Identification & Blockchain Verification**.
 
@@ -283,5 +282,7 @@ This is expected, correct behavior when the input image isn't already indexed pu
 ## Contact
 
 Ujwal U — ujwaljawalgi2208@gmail.com
+
 Srilakshmi — dsrilakshmi@gmail.com
+
 Team Pikachu, HH Goa 2026 (Task 3)
