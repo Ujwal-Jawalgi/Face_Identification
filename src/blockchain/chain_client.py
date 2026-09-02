@@ -91,21 +91,68 @@ class ChainClient:
 
 
 if __name__ == "__main__":
-    print("Deploying FaceTraceRegistry contract to local eth-tester chain...")
+    import sys
+    import json
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+    from src.face.detect_encode import detect_and_encode
+    from src.search.reverse_image_search import search_by_image
+    from src.discovery.select_match import validate_and_select_match
+    from src.crypto.fingerprint import build_evidence_record, generate_fingerprint, save_evidence
+
+    if len(sys.argv) < 2:
+        print("Usage: python src/blockchain/chain_client.py <path_to_image>")
+        sys.exit(1)
+
+    image_path = sys.argv[1]
+
+    print("Step 1-4: Running detection, search, validation, fingerprinting...")
+    face_result = detect_and_encode(image_path)
+    search_results = search_by_image(image_path)
+    outcome = validate_and_select_match(face_result["embedding"], search_results)
+
+    if not outcome["verified"]:
+        print("No verified match found. Cannot proceed to blockchain upload.")
+        sys.exit(1)
+
+    match = outcome["best_match"]
+    record = build_evidence_record(
+        source_image_path=image_path,
+        face_embedding=face_result["embedding"],
+        embedding_model=face_result["embedding_model"],
+        match_title=match["title"],
+        match_link=match["link"],
+        match_source=match["source"],
+        match_distance=match["distance"],
+    )
+    fingerprint = generate_fingerprint(record)
+    evidence_path = save_evidence(record, fingerprint)
+    print(f"Fingerprint: {fingerprint}")
+    print(f"Evidence saved to: {evidence_path}")
+
+    print("\nStep 5: Deploying contract and uploading to blockchain...")
     client = ChainClient()
     address = client.deploy()
     print(f"Contract deployed at: {address}")
 
-    print("\nStoring a test record...")
-    result = client.store_record(
-        fingerprint="test_fingerprint_1234567890abcdef",
-        matched_post_url="https://example.com/test-post",
-    )
-    print(f"Record stored: {result}")
+    result = client.store_record(fingerprint=fingerprint, matched_post_url=match["link"])
+    print(f"\nRecord stored on-chain:")
+    print(f"  Record ID: {result['record_id']}")
+    print(f"  Transaction hash: {result['tx_hash']}")
+    print(f"  Block number: {result['block_number']}")
+    print(f"  Gas used: {result['gas_used']}")
 
-    print("\nReading the record back from chain...")
-    record = client.get_record(result["record_id"])
-    print(f"Retrieved record: {record}")
+    print("\nStep 6: Reading record back from chain to confirm...")
+    onchain_record = client.get_record(result["record_id"])
+    print(f"On-chain fingerprint: {onchain_record['fingerprint']}")
 
-    assert record["fingerprint"] == "test_fingerprint_1234567890abcdef"
-    print("\nVerification: stored and retrieved fingerprint match. Blockchain round-trip successful.")
+    assert onchain_record["fingerprint"] == fingerprint
+    print("\nSUCCESS: On-chain fingerprint matches locally generated fingerprint.")
+
+    # Save the on-chain result alongside the evidence for Phase 7 verification
+    result["evidence_file"] = evidence_path
+    result["fingerprint"] = fingerprint
+    result["matched_post_url"] = match["link"]
+    with open("data/evidence/last_chain_upload.json", "w") as f:
+        json.dump(result, f, indent=2)
+    print(f"\nChain upload details saved to: data/evidence/last_chain_upload.json")
