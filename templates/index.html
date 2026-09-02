@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceTrace - Identity Verification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-fingerprint"></i>
+                <h1>FaceTrace</h1>
+            </div>
+            <p class="subtitle">Blockchain-Verified Identity Matching</p>
+        </header>
+
+        <main class="split-view">
+            <!-- Left Side: Input & Verification -->
+            <section class="panel left-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-expand"></i> Input</h2>
+                </div>
+                
+                <div class="upload-area" id="upload-area">
+                    <input type="file" id="image-upload" accept="image/*" hidden>
+                    <div class="upload-content" id="upload-prompt">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <h3>Drag & Drop</h3>
+                        <p>or <span class="highlight">browse</span> for a face image</p>
+                    </div>
+                    
+                    <!-- Preview shown after selection -->
+                    <div class="image-preview-container hidden" id="preview-container">
+                        <img id="image-preview" src="" alt="Selected Image">
+                        <button class="icon-btn remove-btn" id="remove-btn" title="Remove image">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analysis Controls -->
+                <div class="controls-area">
+                    <button class="primary-btn" id="analyze-btn" disabled>
+                        <i class="fa-solid fa-microchip"></i> Analyze Target
+                    </button>
+                </div>
+
+                <!-- Detected Face (populated after analysis) -->
+                <div class="detected-face-area hidden" id="detected-face-area">
+                    <div class="labeled-preview">
+                        <span class="label">Detected Face</span>
+                        <div class="crop-container">
+                            <img id="detected-face-img" src="" alt="Detected face crop">
+                            <div class="scan-line"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Results -->
+            <section class="panel right-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-link"></i> Discovery & Verification</h2>
+                </div>
+
+                <!-- Initial empty state -->
+                <div class="empty-state" id="results-empty">
+                    <i class="fa-solid fa-magnifying-glass-location empty-icon"></i>
+                    <p>Upload and analyze an image to search for verified matches across the web.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state hidden" id="results-loading">
+                    <div class="spinner"></div>
+                    <p class="loading-text" id="loading-text">Extracting facial features...</p>
+                    
+                    <ul class="pipeline-steps">
+                        <li class="step pending" id="step-detect"><i class="fa-solid fa-circle-notch"></i> Detection & Encoding</li>
+                        <li class="step pending" id="step-search"><i class="fa-solid fa-circle-notch"></i> Web Discovery</li>
+                        <li class="step pending" id="step-verify"><i class="fa-solid fa-circle-notch"></i> Cryptographic Match</li>
+                        <li class="step pending" id="step-chain"><i class="fa-solid fa-circle-notch"></i> Blockchain Upload</li>
+                    </ul>
+                </div>
+
+                <!-- Error State -->
+                <div class="error-state hidden" id="results-error">
+                    <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                    <h3>Analysis Failed</h3>
+                    <p id="error-message">Could not detect a face.</p>
+                    <button class="secondary-btn" id="retry-btn">Try Another Image</button>
+                </div>
+
+                <!-- Success Results State -->
+                <div class="results-content hidden" id="results-content">
+                    <div class="match-card">
+                        <div class="match-badge">
+                            <i class="fa-solid fa-shield-check"></i> Verified Match
+                        </div>
+                        
+                        <div class="match-image-container">
+                            <img id="match-thumbnail" src="" alt="Matched post image">
+                            <div class="fallback-message hidden" id="thumbnail-fallback">
+                                <i class="fa-solid fa-image"></i>
+                                <p>Preview unavailable</p>
+                                <a href="#" id="fallback-link" target="_blank" rel="noopener">View original post <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="match-details">
+                            <a id="match-link" href="#" target="_blank" rel="noopener" class="match-link-btn">
+                                Open Source Post <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            
+                            <div class="detail-section">
+                                <span class="detail-label">Result Title</span>
+                                <h3 id="match-title" class="match-title">Post Title</h3>
+                            </div>
+                            
+                            <div class="match-metadata">
+                                <span class="source-tag"><i class="fa-solid fa-globe"></i> <span id="match-source">Source</span></span>
+                            </div>
+                            
+                            <div class="detail-section hidden" id="snippet-section">
+                                <span class="detail-label">Additional Info</span>
+                                <p id="match-snippet" class="match-snippet"></p>
+                            </div>
+                            <div class="match-metadata mt-2">
+                                <span class="distance-tag"><i class="fa-solid fa-arrows-left-right"></i> Distance: <span id="match-distance">0.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="blockchain-card">
+                        <h4>Blockchain Record</h4>
+                        <div class="record-grid">
+                            <div class="record-item">
+                                <span class="record-label">Fingerprint</span>
+                                <span class="record-value mono truncate" id="record-fingerprint" title="">0x...</span>
+                            </div>
+                            <div class="record-item">
+                                <span class="record-label">Contract</span>
+                                <span class="record-value mono truncate" id="record-contract" title="">0x...</span>
+                            </div>
+                            <div class="record-item">
+                                <span class="record-label">Tx Hash</span>
+                                <span class="record-value mono truncate" id="record-tx" title="">0x...</span>
+                            </div>
+                        </div>
+                        <div class="verification-status success">
+                            <i class="fa-solid fa-link"></i> On-Chain Verification: SUCCESS
+                        </div>
+                    </div>
+
+                    <button class="secondary-btn try-another-btn" id="try-another-btn">
+                        <i class="fa-solid fa-rotate-left"></i> Try Another Image
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 Team Pikachu, HH Goa (Task 3)</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
