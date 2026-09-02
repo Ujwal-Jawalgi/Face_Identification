@@ -1,7 +1,9 @@
 # FaceTrace - Face Identification & Blockchain Verification
 
 **Team:** Team Pikachu
+
 **Team Members:** Ujwal U,   Srilakshmi
+
 **Contact:** ujwaljawalgi2208@gmail.com,   dsrilakshmi@gmail.com
 
 Built for **HH Goa 2026 Shortlisting Task 3: Face Identification & Blockchain Verification**.
@@ -46,10 +48,10 @@ Face Image
 [1] Face Detection & Encoding        (RetinaFace detector + Facenet embedding, via DeepFace)
     │
     ▼
-[2] Genuine Live Web/Social Search   (SerpApi — Google Lens engine; zero hardcoded results)
+[2] Genuine Live Web/Social Search   (SerpApi - Google Lens engine; zero hardcoded results)
     │
     ▼
-[3] Match Validation                 (Independent face-embedding comparison — not just
+[3] Match Validation                 (Independent face-embedding comparison - not just
     │                                  trusting the search engine's visual-similarity ranking)
     ▼
 [4] Cryptographic Fingerprint        (SHA-256 over a canonical JSON evidence record)
