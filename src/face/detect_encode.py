@@ -45,11 +45,14 @@ def detect_and_encode(image_path: str, output_dir: str = "data/evidence") -> dic
         # DeepFace.represent handles detection + encoding in one call.
         # enforce_detection=True means it will raise if no face is found,
         # instead of silently returning garbage.
+        # detector_backend="retinaface" -> deep-learning-based detector, much more
+        # accurate than "opencv" (Haar cascade), which was producing false-positive
+        # detections on busy backgrounds (leaves, fabric patterns, etc.)
         results = DeepFace.represent(
             img_path=image_path,
             model_name=model_name,
             enforce_detection=True,
-            detector_backend="opencv",
+            detector_backend="retinaface",
         )
     except ValueError as e:
         # DeepFace raises ValueError internally when it can't find a face
@@ -79,18 +82,30 @@ def detect_and_encode(image_path: str, output_dir: str = "data/evidence") -> dic
     }
 
 
-def _save_cropped_face(image_path: str, facial_area: dict, output_dir: str) -> str:
-    """Crops the detected face region from the source image and saves it."""
+def _save_cropped_face(image_path: str, facial_area: dict, output_dir: str, padding_ratio: float = 0.4) -> str:
+    """Crops the detected face region from the source image and saves it,
+    with extra padding so hair/forehead/chin aren't harshly cut off."""
     from PIL import Image
 
     img = Image.open(image_path)
+    img_w, img_h = img.size
+
     x, y, w, h = (
         facial_area["x"],
         facial_area["y"],
         facial_area["w"],
         facial_area["h"],
     )
-    cropped = img.crop((x, y, x + w, y + h))
+
+    pad_x = int(w * padding_ratio)
+    pad_y = int(h * padding_ratio)
+
+    left = max(0, x - pad_x)
+    top = max(0, y - pad_y)
+    right = min(img_w, x + w + pad_x)
+    bottom = min(img_h, y + h + pad_y)
+
+    cropped = img.crop((left, top, right, bottom))
 
     base_name = os.path.splitext(os.path.basename(image_path))[0]
     cropped_path = os.path.join(output_dir, f"{base_name}_cropped_face.jpg")
