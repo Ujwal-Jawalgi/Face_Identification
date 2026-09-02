@@ -78,7 +78,12 @@ def upload_image_to_serpapi(image_path: str) -> str:
     files = {"image": ("upload.jpg", image_bytes, "image/jpeg")}
     data = {"api_key": api_key}
 
-    response = requests.post(SERPAPI_UPLOAD_URL, files=files, data=data, timeout=30)
+    try:
+        response = requests.post(SERPAPI_UPLOAD_URL, files=files, data=data, timeout=30)
+    except requests.exceptions.RequestException as e:
+        raise SerpApiError(
+            f"Could not reach SerpApi - check your internet connection. Details: {e}"
+        )
 
     if response.status_code != 200:
         raise SerpApiError(
@@ -102,7 +107,7 @@ def search_by_image(image_path: str) -> dict:
     a 'visual_matches' list of real candidate pages/posts found live at request time.
 
     Raises:
-        SerpApiError: on upload or search failure.
+        SerpApiError: on upload or search failure, including network issues.
         FileNotFoundError: if image_path doesn't exist.
     """
     api_key = _get_api_key()
@@ -114,7 +119,12 @@ def search_by_image(image_path: str) -> dict:
         "api_key": api_key,
     }
 
-    response = requests.get(SERPAPI_SEARCH_URL, params=params, timeout=60)
+    try:
+        response = requests.get(SERPAPI_SEARCH_URL, params=params, timeout=60)
+    except requests.exceptions.RequestException as e:
+        raise SerpApiError(
+            f"Could not reach SerpApi - check your internet connection. Details: {e}"
+        )
 
     if response.status_code != 200:
         raise SerpApiError(
