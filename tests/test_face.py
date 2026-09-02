@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from src.face.detect_encode import detect_and_encode, FaceDetectionError
 
 # Update these paths to match your actual test images
-FACE_IMAGE_PATH = "data/input/test_face.jpg"
+FACE_IMAGE_PATH = "data/input/test_face6.jpg"
 NO_FACE_IMAGE_PATH = "data/input/mountain.jpg"
 
 
