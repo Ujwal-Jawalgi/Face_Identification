@@ -115,37 +115,53 @@ document.addEventListener('DOMContentLoaded', () => {
         stateElement.classList.remove('hidden');
     }
 
-    let progressInterval;
+    let progressTimer;
+    let isProgressActive = false;
+
     function startProgressLabels() {
-        const labels = [
-            "Detecting face...",
-            "Generating facial embedding...",
-            "Searching live across the web...",
-            "Validating candidate matches...",
-            "Building cryptographic fingerprint...",
-            "Uploading to blockchain...",
-            "Confirming on-chain record..."
+        const sequence = [
+            { text: "Detecting face...", time: 5000 },
+            { text: "Generating facial embedding...", time: 5000 },
+            { text: "Searching live across the web...", time: 10000 },
+            { text: "Validating candidate matches...", time: 30000 },
+            { text: "Building cryptographic fingerprint...", time: 3000 },
+            { text: "Uploading to blockchain...", time: 4000 },
+            { text: "Confirming on-chain record...", time: 3000 }
         ];
         
         let currentIndex = 0;
-        loadingText.innerText = labels[currentIndex];
+        let isLooping = false;
+        isProgressActive = true;
         
-        if (progressInterval) clearInterval(progressInterval);
+        if (progressTimer) clearTimeout(progressTimer);
         
-        progressInterval = setInterval(() => {
-            if (currentIndex < labels.length - 1) {
+        function nextStep() {
+            if (!isProgressActive) return;
+            
+            loadingText.innerText = sequence[currentIndex].text;
+            
+            // During the infinite loop, cycle every 3 seconds
+            const delay = isLooping ? 3000 : sequence[currentIndex].time;
+            
+            progressTimer = setTimeout(() => {
                 currentIndex++;
-                loadingText.innerText = labels[currentIndex];
-            } else {
-                clearInterval(progressInterval);
-            }
-        }, 4000);
+                if (currentIndex >= sequence.length) {
+                    isLooping = true;
+                    // Loop back to the last 3 labels (indices 4, 5, 6)
+                    currentIndex = sequence.length - 3;
+                }
+                nextStep();
+            }, delay);
+        }
+        
+        nextStep();
     }
 
     function stopProgressLabels() {
-        if (progressInterval) {
-            clearInterval(progressInterval);
-            progressInterval = null;
+        isProgressActive = false;
+        if (progressTimer) {
+            clearTimeout(progressTimer);
+            progressTimer = null;
         }
     }
 
