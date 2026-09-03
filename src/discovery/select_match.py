@@ -73,7 +73,7 @@ def _is_social_platform(link: str) -> bool:
     return any(domain in (link or "") for domain in SOCIAL_DOMAINS)
 
 
-def validate_and_select_match(input_embedding: list, raw_search_results: dict, max_candidates_to_check: int = 15) -> dict:
+def validate_and_select_match(input_embedding: list, raw_search_results: dict, max_candidates_to_check: int = 6) -> dict:
     """
     Independently verifies SerpApi visual_matches against the input face embedding.
 

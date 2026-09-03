@@ -37,11 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const recordContract = document.getElementById('record-contract');
     const recordTx = document.getElementById('record-tx');
     
-    // Loading steps
-    const stepDetect = document.getElementById('step-detect');
-    const stepSearch = document.getElementById('step-search');
-    const stepVerify = document.getElementById('step-verify');
-    const stepChain = document.getElementById('step-chain');
+    // Loading state
     const loadingText = document.getElementById('loading-text');
 
     let selectedFile = null;
@@ -119,43 +115,38 @@ document.addEventListener('DOMContentLoaded', () => {
         stateElement.classList.remove('hidden');
     }
 
-    // Fake progress animation since the backend runs everything in one blocking call
     let progressInterval;
-    function simulateProgress() {
-        const steps = [
-            { el: stepDetect, text: "Detecting face and encoding..." },
-            { el: stepSearch, text: "Live web discovery via SerpApi...", delay: 3000 },
-            { el: stepVerify, text: "Validating candidates & hashing...", delay: 8000 },
-            { el: stepChain, text: "Deploying & writing to blockchain...", delay: 11000 }
+    function startProgressLabels() {
+        const labels = [
+            "Detecting face...",
+            "Generating facial embedding...",
+            "Searching live across the web...",
+            "Validating candidate matches...",
+            "Building cryptographic fingerprint...",
+            "Uploading to blockchain...",
+            "Confirming on-chain record..."
         ];
-
-        // Reset
-        steps.forEach(s => {
-            s.el.className = 'step pending';
-            s.el.innerHTML = '<i class="fa-solid fa-circle-notch"></i> ' + s.el.innerText;
-        });
-
-        const startStep = (index) => {
-            if (index > 0) {
-                const prev = steps[index-1].el;
-                prev.className = 'step done';
-                prev.innerHTML = '<i class="fa-solid fa-check"></i> ' + prev.innerText;
+        
+        let currentIndex = 0;
+        loadingText.innerText = labels[currentIndex];
+        
+        if (progressInterval) clearInterval(progressInterval);
+        
+        progressInterval = setInterval(() => {
+            if (currentIndex < labels.length - 1) {
+                currentIndex++;
+                loadingText.innerText = labels[currentIndex];
+            } else {
+                clearInterval(progressInterval);
             }
-            if (index < steps.length) {
-                const current = steps[index].el;
-                current.className = 'step active';
-                loadingText.innerText = steps[index].text;
-            }
-        };
+        }, 4000);
+    }
 
-        startStep(0);
-        steps.slice(1).forEach((step, i) => {
-            setTimeout(() => {
-                if (!resultsLoading.classList.contains('hidden')) {
-                    startStep(i + 1);
-                }
-            }, step.delay);
-        });
+    function stopProgressLabels() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
     }
 
     // --- Analysis Logic ---
@@ -167,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         removeBtn.disabled = true;
         detectedFaceArea.classList.add('hidden');
         showState(resultsLoading);
-        simulateProgress();
+        startProgressLabels();
 
         const formData = new FormData();
         formData.append('image', selectedFile);
@@ -190,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMessage.innerText = err.message;
             showState(resultsError);
         } finally {
+            stopProgressLabels();
             analyzeBtn.disabled = false;
             removeBtn.disabled = false;
         }
